@@ -13,9 +13,14 @@ import {
 import { traducir, norm } from './translate.js';
 import { setIdioma, getIdiomas } from './store.js';
 
-const TOKEN = process.env.DISCORD_TOKEN;
-const GUILD_ID = process.env.GUILD_ID;
-const CHANNEL_ID = process.env.CHANNEL_ID; // opcional: limita a un canal
+// Limpia valores del entorno: quita espacios, saltos de linea y comillas que
+// a veces se cuelan al pegar en el panel del hosting (y provocan el error
+// "invalid Authorization header" al conectar con Discord).
+const limpiar = (v) => (v || '').trim().replace(/^["']|["']$/g, '').trim();
+
+const TOKEN = limpiar(process.env.DISCORD_TOKEN);
+const GUILD_ID = limpiar(process.env.GUILD_ID);
+const CHANNEL_ID = limpiar(process.env.CHANNEL_ID); // opcional: limita a un canal
 const DEFAULTS = (process.env.TARGET_LANGS || 'es,en')
   .split(',').map((s) => norm(s)).filter(Boolean);
 
