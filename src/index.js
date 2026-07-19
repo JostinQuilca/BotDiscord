@@ -107,12 +107,24 @@ const comandos = [
 
 async function registrarComandos(appId) {
   const rest = new REST({ version: '10' }).setToken(TOKEN);
-  if (GUILD_ID) {
-    await rest.put(Routes.applicationGuildCommands(appId, GUILD_ID), { body: comandos });
-    console.log(`✓ Comandos /idioma y /idiomas registrados en el servidor ${GUILD_ID}`);
-  } else {
-    await rest.put(Routes.applicationCommands(appId), { body: comandos });
-    console.log('✓ Comandos globales registrados (pueden tardar ~1h en aparecer)');
+  // Registramos en los servidores donde el bot REALMENTE esta (no dependemos de
+  // un GUILD_ID escrito a mano, que es facil de equivocar). Es instantaneo.
+  const guilds = [...client.guilds.cache.values()];
+  console.log(`🏠 El bot esta en ${guilds.length} servidor(es): ` +
+    (guilds.map((g) => `${g.name} (${g.id})`).join('  |  ') || '(ninguno)'));
+
+  if (guilds.length === 0) {
+    console.log('⚠️  No hay servidores donde registrar. Invita el bot y reinicia.');
+    return;
+  }
+  for (const g of guilds) {
+    try {
+      await rest.put(Routes.applicationGuildCommands(appId, g.id), { body: comandos });
+      console.log(`✓ Comandos registrados en "${g.name}"`);
+    } catch (e) {
+      console.error(`✗ Fallo en "${g.name}" (${g.id}): ${e.message}`);
+      console.error('   → Re-invita el bot A ESE servidor con scope applications.commands.');
+    }
   }
 }
 
