@@ -99,6 +99,10 @@ const comandos = [
     .setName('idiomas')
     .setDescription('Muestra a que idiomas se esta traduciendo ahora')
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('panel')
+    .setDescription('Publica un panel fijo para que TODOS elijan su idioma')
+    .toJSON(),
 ];
 
 async function registrarComandos(appId) {
@@ -164,13 +168,27 @@ client.on(Events.InteractionCreate, async (i) => {
       return;
     }
 
-    // El usuario eligio idioma en el menu desplegable
+    // Comando /panel  -> publica el selector PUBLICO en el canal (para todos)
+    if (i.isChatInputCommand() && i.commandName === 'panel') {
+      const embed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🌐 Elige tu idioma · Choose your language')
+        .setDescription(
+          'Selecciona en el menú el idioma en el que quieres **leer** los mensajes.\n' +
+          'Todo lo que se escriba en este canal se traducirá automáticamente para ti.',
+        );
+      await i.reply({ embeds: [embed], components: menusDeIdioma() });
+      return;
+    }
+
+    // El usuario eligio idioma en el menu (sirve igual en /idioma y en el panel).
+    // Responde en PRIVADO y no toca el panel, para que siga disponible para todos.
     if (i.isStringSelectMenu() && i.customId.startsWith('sel_idioma')) {
       const c = norm(i.values[0]);
       setIdioma(i.user.id, c);
-      await i.update({
+      await i.reply({
         content: `✅ Listo. Ahora recibirás los mensajes en **${etiqueta(c)}**.`,
-        components: [],
+        flags: MessageFlags.Ephemeral,
       });
     }
   } catch (e) {
